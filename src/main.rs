@@ -126,6 +126,29 @@ fn run_statement(mut global_vars: &mut VarMap, statement: Statement) -> Result<O
                 },
             }
         },
+        Statement::MutateArr(op, index, expr) => {
+            let indices: Vec<usize> = vec![];
+            let (name, indices) = flatten_index(index, indices, global_vars)?;
+            println!("kaboom {:?} {:?}", name, indices);
+            let old_value = global_vars.get(&name).unwrap();
+            println!("abrakadabra {:?}", old_value);
+            let val = eval_expr(&global_vars, &expr)?;
+            println!("aoo {:?}", val);
+            let mut r = old_value;
+            // please mutate array here
+
+            //for i in indices {
+            //    let v = match r {
+            //        &Value::Array(ref v) => v,
+            //        _ => {
+            //            return Err("nope".to_owned());
+            //        }
+            //    };
+            //    r = v.get_mut(i).unwrap();
+            //    println!("hrm {:?}", v);
+            //    //r = &old_value[i];
+            //}
+        }
         Statement::Expression(expression) => {
             eval_expr(&global_vars, &expression)?;
         }
@@ -212,6 +235,31 @@ fn run_statement(mut global_vars: &mut VarMap, statement: Statement) -> Result<O
     }
 
     Ok(None)
+}
+
+fn flatten_index(expr: Expr, indices: Vec<usize>, global_vars: &VarMap)
+    -> Result<(String, Vec<usize>), String>
+{
+    match expr {
+        Expr::Reference(ref r) => {
+            let r = Ident::new(r.to_owned())?.0;
+            Ok((r, indices))
+        },
+        Expr::Index(ref expr, ref index) => {
+            let mut new_indices = indices.clone();
+            let index = eval_expr(global_vars, index)?;
+            let index = if let Value::Num(ref i) = index {
+                i.clone() as usize
+            } else {
+                return Err(format!("{} cannot be used as index",
+                            index.get_type()))
+            };
+            new_indices.push(index);
+            let expr = (*expr).clone(); // no I don't know what I'm doing
+            flatten_index(*expr, new_indices, global_vars)
+        },
+        _ => Err("nope nope this can't happen".to_owned())
+    }
 }
 
 fn eval_expr(global_vars: &VarMap, expr: &Expr) -> Result<Value, String> {

@@ -11,6 +11,7 @@ pub enum Line {
 pub enum Statement {
     DeclareVar(String, Expr),
     MutateVar(AssignOp, String, Expr),
+    MutateArr(AssignOp, Expr, Expr),
     Expression(Expr),
     Return(Expr),
     If(IfStatement, Option<Vec<IfStatement>>, Option<Vec<Statement>>), // (If, Else If, Else)
